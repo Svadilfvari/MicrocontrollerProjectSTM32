@@ -1,157 +1,146 @@
-# STM32 Embedded Games & Utilities Project
+# STM32 Embedded Games & Utilities
 
-## 🧩 Overview
+![Greed Island Demo](Media/GreedIsland.gif)
 
-This embedded systems project for the STM32 microcontroller implements a suite of interactive mini-games and utilities. It leverages several hardware peripherals: timers, ADC, UART, DAC, GPIOs, an ultrasonic sensor, and an IR remote receiver using the NEC protocol. Communication and control are provided through buttons, serial UART interface, and an IR remote.
+> 🎮 **3 Mini-Games + Utilities**  
+> 🚀 Built on **STM32** with Timers, ADC, UART, Ultrasonic Sensor, and IR Remote  
+
+---
+
+## 🎥 Full Demo Video
+▶️ [Watch on YouTube](https://youtu.be/FvCqEcLT_tg)
+
+---
+
+## 🧩 Project Overview
+
+This embedded systems project for the **STM32 microcontroller** implements a suite of **interactive mini-games and utilities**.  
+It leverages multiple hardware peripherals: **timers, ADC, UART, DAC, GPIOs, an ultrasonic sensor, and an IR remote receiver using the NEC protocol**.  
+
+Games are controlled through **buttons, UART serial interface, and IR remote control**, making it a **fun mix of hardware & software integration**.
 
 ---
 
 ## 🎮 Features
 
-### ⚡ Game 1: Reaction Time
+✅ **Reaction Time Game**  
+- Two-player reflex challenge  
+- LED lights up after a random delay → fastest button press wins  
+- Timing captured with **TIM4 input capture**  
+- Results displayed via **UART**
 
-- A two-player reflex challenge.
-- After a random delay, an LED lights up.
-- Players press a button as quickly as possible.
-- The winner is the fastest responder.
-- Time is captured using **TIM4 input capture**.
-- The winner’s time is printed via **UART**.
+✅ **Countdown Challenge**  
+- Players must wait until a countdown reaches zero before pressing  
+- **Potentiometer (ADC)** sets difficulty (easy/normal/hard)  
+- Early presses penalized, melodies played via **PWM (TIM2 & TIM3)**  
+- Positive/negative reaction times printed via UART  
+
+✅ **Greed Island (2D Console Game)**  
+- Text-based 20×20 adventure game in UART terminal  
+- Controlled with **IR remote (NEC protocol)**  
+- Collect coins, avoid traps, manage HP, and win/lose  
+
+✅ **Ultrasonic Distance Trigger**  
+- Select games by moving your hand near the ultrasonic sensor (1–7 cm)  
+- **TIM2 input capture** calculates echo duration → distance  
+
+---
+
+## 🏗️ Hardware Overview
+
+![Block Diagram](docs/BLOCK-DIAGRAM.png)  
+*(Block diagram showing STM32, ultrasonic sensor, IR remote, buttons & UART)*  
+
+| Peripheral | Purpose |
+|------------|---------|
+| **GPIO**   | LEDs, push buttons, ultrasonic trigger/echo, IR input |
+| **TIM2**   | PWM melody generation, ultrasonic timing, delays |
+| **TIM3**   | Tone timing (melody note durations) |
+| **TIM4**   | Input capture for Reaction Time game |
+| **TIM9**   | Delay timing (software delay) |
+| **TIM11**  | NEC IR decoding |
+| **ADC1**   | Potentiometer difficulty selection |
+| **DAC**    | Initialized but not used in current version |
+| **USART2** | UART communication with PC |
+| **I2C1**   | Configured, ready for future peripherals |
+| **EXTI**   | Button interrupts & IR receiver interrupts |
 
 ---
 
-### ⏱️ Game 2: Countdown Challenge
-
-- Players must wait until a countdown reaches zero before pressing a button.
-- Countdown speed depends on **potentiometer** value read using **ADC**:
-  - Easy (2s): ADC < 1330
-  - Normal (1s): 1330 ≤ ADC < 2600
-  - Hard (0.5s): ADC ≥ 2600
-- Players are penalized for pressing early (before zero).
-- Melody feedback is generated based on performance using **PWM signals** via **TIM2 and TIM3**.
-- Player reaction times (positive or negative) are printed via **UART**.
-
----
-
-### 🪙 Game 3: Greed Island (2D Console Game)
-
-- A text-based adventure on a 20x20 grid, displayed via UART.
-- Player moves using **IR remote control**.
-- Collect gold coins and avoid traps or obstacles.
-- Features simple interaction mechanics like keys, padlocks, HP system, and victory/loss messages.
-
----
+## 🌀 How It Works (Key Concepts)
 
 ### 📏 Ultrasonic Distance Trigger
+- Ultrasonic module sends 10μs trigger pulse (PA1)
+- Echo signal captured on PB10 via TIM2 input capture
+- Pulse duration → distance = `time * 0.0343 / 2` cm
 
-- Game selection is activated by moving your hand near an **ultrasonic sensor**.
-- Distance range: **1 cm to 7 cm**.
-- Implements timing capture using **TIM2** for echo pulse analysis.
-
-### 👇 How It Works
-
-Using **Timer 2 (TIM2)** and **GPIOs**:
-
-- The sensor emits a 10μs pulse via **PA1**.
-- The **echo pin (PB10)** captures the reflected signal.
-- **TIM2 Channel 3** is configured for input capture on rising and falling edges.
-- Time between edges gives the pulse duration.
-
-\[
-\text{Distance} = \frac{\text{Pulse Duration} \times \text{Speed of Sound}}{2}
-\]
-
-- The speed of sound used: `0.0343 cm/μs`.
-
----
-
-## 📡 NEC Protocol — IR Remote Control
-
-The **NEC protocol** is used for decoding commands from a standard IR remote control.
-
-### Key Concepts:
-- NEC sends a **32-bit frame**:
-  - 8 bits: address
-  - 8 bits: logical inverse of address
-  - 8 bits: command
-  - 8 bits: logical inverse of command
-- Each bit is identified using pulse length:
-  - Logic `1`: 562.5μs pulse + 1687.5μs space
-  - Logic `0`: 562.5μs pulse + 562.5μs space
-
-### STM32 Integration:
-- An IR receiver is connected to **PB11 (EXTI line)**.
-- **TIM11** is used to measure pulse intervals.
-- Falling edges trigger an interrupt, and pulse duration is checked:
+### 📡 IR NEC Protocol
+- IR receiver → PB11 (EXTI)
+- TIM11 measures pulse lengths:
   - >1700μs → logic `1`
   - 1000–1700μs → logic `0`
-- After 32 bits are received:
-  - If command and its logical inverse are valid, the decoded **`cmd`** is saved.
-  - Mapped to directional movement in **Game 3**.
+- After 32 bits decoded, mapped to movement commands in Game 3
+
+### 🧭 UART Communication
+- USART2 @ 115200 baud
+- Menus, map updates, reaction times
+- Send `X` to reset MCU (NVIC_SystemReset)
+
+### ⏱ Countdown Difficulty via ADC
+- Potentiometer → ADC1 12-bit conversion
+- <1330 → Easy (2s delay)
+- 1330–2600 → Normal (1s)
+- >2600 → Hard (0.5s)
 
 ---
 
-## 🧭 UART Communication
+## 🌀 Flowcharts
 
-- UART (USART2) is used for:
-  - Printing game menus and instructions.
-  - Displaying real-time game states (coordinates, map, results).
-  - Showing ADC values, distance measurements, and reaction times.
+**Example: TIM4 ISR for Reaction Time Game**  
+![Flowchart TIM4](Flow%20Charts/ISR_Flow_Chart_TIM4_FINAL_VERSION.png)
 
-### Configuration:
-- Baud rate: **115200**
-- Transmission via `HAL_UART_Transmit`
-- Reception handled with **interrupts (`HAL_UART_RxCpltCallback`)** for responsiveness.
-
-### Special Commands:
-- Sending `X` over UART resets the system using `NVIC_SystemReset()`.
-
----
-
-## 🧪 I2C (Prepared for Future Use)
-
-Although I2C is initialized (`MX_I2C1_Init()`), it is **not actively used** in the current game logic. It is configured for:
-- 400kHz Fast Mode
-- 7-bit addressing
-- Ready for expansion (e.g., adding an OLED display, EEPROM, or additional sensors).
-
-This provides a base for future improvements or hardware extensions.
-
----
-
-## 🔧 Hardware Peripherals Used
-
-| Peripheral | Description |
-|------------|-------------|
-| **GPIO**   | LEDs, push buttons, ultrasonic trigger/echo, IR input |
-| **TIM2**   | PWM melody generation, ultrasound timing, delays |
-| **TIM3**   | Tone timing (for melody note durations) |
-| **TIM4**   | Input capture for reaction time game |
-| **TIM9**   | Delay timing (software delay routine) |
-| **TIM11**  | IR timing base for NEC decoding |
-| **ADC**    | Potentiometer input to set countdown difficulty |
-| **DAC**    | Initialized, but not used in current version |
-| **UART2**  | Serial communication with PC |
-| **I2C1**   | Configured, ready for future peripheral support |
-| **EXTI**   | Used for PC13 (user button) and PB11 (IR receiver) interrupts |
+*(More detailed flowcharts available in [Lab Report PDF](docs/Group%2016_LAB_REPORT.pdf))*  
 
 ---
 
 ## ▶️ Getting Started
 
-1. Flash the code to your STM32 board using STM32CubeIDE or ST-Link.
-2. Connect a UART terminal (e.g., Tera Term, PuTTY) at **115200 baud**.
-3. Place your hand over the ultrasonic sensor to trigger the menu.
-4. Use:
-   - On-board push buttons for Games 1 & 2.
-   - IR remote control for Game 3.
+1. Flash code to STM32 board via **STM32CubeIDE** or **ST-Link**
+2. Open a UART terminal (Tera Term, PuTTY) at **115200 baud**
+3. Wave your hand over ultrasonic sensor to trigger game menu
+4. Play with:
+   - On-board push buttons → Games 1 & 2
+   - IR remote → Game 3 (Greed Island)
 
 ---
 
 ## 📌 Notes
+- UART is the main feedback/debug interface
+- Buttons & IR are **interrupt-driven** for accuracy
+- Code is modular & future-proof (I2C, DAC, OLED display planned)
 
-- UART is the main interface for feedback and debugging.
-- Button presses are interrupt-driven for accuracy.
-- The IR and ultrasonic systems run with **precise timing via timers and interrupts**.
-- Code is modular and ready for further extensions (I2C, DAC, OLED, etc.).
+---
+
+## 🏆 Academic Context & Achievement
+
+This project was developed as part of the **Microprocessor-Based Digital Systems course** at *Universidad Carlos III de Madrid*.
+
+- **Team Members:** Yousri Aboudaoud, Lucia Barranco Moreno, Maria Fernanda Montiel Zavala  
+- **My Individual Contribution:** Implemented key peripherals (Timers, ADC, UART, IR NEC decoder), ultrasonic trigger logic, and the 2D Greed Island game.  
+- **Individual Evaluation:** Achieved a **perfect grade of 10.4/10**, recognizing both technical implementation and documentation quality.
+
+---
+
+## 📜 Documentation
+- [📄 Full Lab Report PDF](docs/Group%2016_LAB_REPORT.pdf)
+- [📂 Source Code](src/)
+- [🎥 Demo Video](https://youtu.be/FvCqEcLT_tg)
+
+---
+
+## 🔮 Future Improvements
+- OLED display over I2C for graphical interface  
+- DAC sound effects for richer melodies  
+- Save/load game states via EEPROM  
 
 ---
