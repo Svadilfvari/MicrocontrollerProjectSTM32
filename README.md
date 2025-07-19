@@ -97,7 +97,7 @@ Games are controlled through **buttons, UART serial interface, and IR remote con
 ## 🌀 Flowcharts
 
 **Example: TIM4 ISR for Reaction Time Game**  
-![Flowchart TIM4](Flow%20Charts/ISR_Flow_Chart_TIM4_FINAL_VERSION.png)
+![Flowchart TIM4](Flow%20Charts/ISR_Flow_Chart_TIM4_FINAL_VERSION.PNG)
 
 *(More detailed flowcharts available in [Lab Report PDF](docs/Group%2016_LAB_REPORT.pdf))*  
 
