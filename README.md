@@ -125,7 +125,7 @@ Games are controlled through **buttons, UART serial interface, and IR remote con
 
 This project was developed as part of the **Microprocessor-Based Digital Systems course** at *Universidad Carlos III de Madrid*.
 
-- **Team Members:** Yousri Aboudaoud, Lucia Barranco Moreno, Maria Fernanda Montiel Zavala  
+- **Team Members:** Edouard David, Lucia Barranco Moreno, Maria Fernanda Montiel Zavala  
 - **My Individual Contribution:** Implemented key peripherals (Timers, ADC, UART, IR NEC decoder), ultrasonic trigger logic, and the 2D Greed Island game.  
 - **Individual Evaluation:** Achieved a **perfect grade of 10.4/10**, recognizing both technical implementation and documentation quality.
 
